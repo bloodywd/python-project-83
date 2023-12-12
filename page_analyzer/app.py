@@ -11,4 +11,3 @@ def get_main():
     return render_template(
         'index.html'
     )
-
