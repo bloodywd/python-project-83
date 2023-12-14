@@ -1,43 +1,61 @@
 from flask import Flask, render_template, request, url_for, redirect, flash, get_flashed_messages
 from dotenv import load_dotenv
 import os
-import psycopg2
 from validators import url as validate
-from datetime import datetime
+from page_analyzer.database import select_urls, get_url_id, insert_to_db, select_url
 
 
 load_dotenv()
-DATABASE_URL = os.getenv('DATABASE_URL')
-
-
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
 
 
 @app.route('/')
 def get_main():
-    messages = get_flashed_messages()
+    messages = get_flashed_messages(with_categories=True)
     return render_template(
         'index.html',
-        messages=messages
+        messages=messages,
     )
 
 
 @app.post('/')
 def post_url():
     url = request.form.get('url')
-    if not validate(url):
-        flash('Некорректный url', 'error'),
-    else:
-        current_datetime = datetime.now()
-        timestamp = current_datetime.strftime('%Y-%m-%d %H:%M:%S')
-        conn = psycopg2.connect(DATABASE_URL)
-        cur = conn.cursor()
-        cur.execute("INSERT INTO urls (name, created_at) VALUES (%s, %s)", (url, timestamp))
-        conn.commit()
-        cur.close()
-        flash('Успешно добавлено', 'success')
+    if not validate(url) and len(url) < 256:
+        flash('Некорректный url', 'danger'),
+        return redirect(
+            url_for('get_main')
+        )
 
-    return redirect(
-        url_for('get_main')
+    else:
+        is_inserted = insert_to_db(url)
+        id = get_url_id(url)
+        if is_inserted:
+            flash('Успешно добавлено', 'success')
+        else:
+            flash('Страница уже существует', 'success')
+        return redirect(
+            url_for('get_url', id=id)
+        )
+
+
+@app.route('/urls/<int:id>')
+def get_url(id):
+    messages = get_flashed_messages(with_categories=True)
+    url = select_url(id)
+    return render_template(
+        'url.html',
+        messages=messages,
+        url=url
+    )
+
+
+@app.route('/urls')
+def get_urls():
+    urls = select_urls()
+    print(urls)
+    return render_template(
+        'urls.html',
+        urls=urls
     )

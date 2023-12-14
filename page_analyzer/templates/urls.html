@@ -24,24 +24,29 @@
     </nav>
 </header>
 
-{% if messages %}
-    {% for category, message in messages %}
-        <div class="alert alert-{{ category }}" role="alert">{{ message }}</div>
-    {% endfor %}
-{% endif %}
-
-
 <main class="flex-grow-1">
     <div class="container-lg mt-3">
-        <div class="col-12 col-md-10 col-lg-8 mx-auto border rounded-3 bg-light p-5">
-            <h1 class="display-3">Анализатор страниц</h1>
-            <p class="lead">Бесплатно проверяйте сайты на SEO-пригодность</p>
-            <form action='{{ url_for("post_url") }}' method="post" class="d-flex justify-content-center">
-                <input class="form-control form-control-lg" type="text" name="url" placeholder="https://www.example.com"
-                       value="">
-                <input class="btn btn-primary btn-lg ms-3 px-5 text-uppercase mx-3" type="submit" value="Проверить">
-            </form>
-        </div>
+        <h1>Сайты</h1>
+        <table class="table table-bordered">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Имя</th>
+                    <th>Последняя проверка</th>
+                    <th>Код ответа</th>
+                </th>
+            </thead>
+            <tbody>
+                {% for url in urls %}
+                <tr>
+                    <td>{{ url.id }}</td>
+                    <td><a href="{{ url_for('get_url', id=url.id) }}">{{url.name}}</a>  </td>
+                    <td></td>
+                    <td></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
     </div>
 </main>
 
