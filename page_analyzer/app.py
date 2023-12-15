@@ -3,7 +3,7 @@ from dotenv import load_dotenv
 import os
 from validators import url as validate
 from page_analyzer.database import select_urls, get_url_id, insert_to_db, select_url
-
+from urllib.parse import urlparse
 
 load_dotenv()
 app = Flask(__name__)
@@ -21,16 +21,17 @@ def get_main():
 
 @app.post('/')
 def post_url():
-    url = request.form.get('url')
-    if not validate(url) and len(url) < 256:
+    url = urlparse(request.form.get('url'))
+    normalized_url = f'{url.scheme}://{url.hostname}'
+    if not validate(normalized_url) and len(normalized_url) < 256:
         flash('Некорректный url', 'danger'),
         return redirect(
             url_for('get_main')
         )
 
     else:
-        is_inserted = insert_to_db(url)
-        id = get_url_id(url)
+        is_inserted = insert_to_db(normalized_url)
+        id = get_url_id(normalized_url)
         if is_inserted:
             flash('Успешно добавлено', 'success')
         else:
