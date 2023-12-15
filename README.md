@@ -6,4 +6,4 @@
 [![Maintainability](https://api.codeclimate.com/v1/badges/b18375dd1b1733fa986d/maintainability)](https://codeclimate.com/github/bloodywd/python-project-83/maintainability)
 [![Test Coverage](https://api.codeclimate.com/v1/badges/b18375dd1b1733fa986d/test_coverage)](https://codeclimate.com/github/bloodywd/python-project-83/test_coverage)
 
-<https://page-analyzer-or3b.onrender.com/>
+<https://page-analyzer-26u6.onrender.com/>

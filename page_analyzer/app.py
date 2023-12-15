@@ -15,19 +15,15 @@ from page_analyzer.database import (
     insert_check_to_db,
     select_checks
 )
+from page_analyzer.validate import validate_url
 from dotenv import load_dotenv
 import os
-from validators import url as validate
-from urllib.parse import urlparse
+import requests
+
 
 load_dotenv()
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
-
-
-def normalize_url(url):
-    normalized = urlparse(url)
-    return f'{normalized.scheme}://{normalized.hostname}'
 
 
 @app.route('/')
@@ -42,16 +38,16 @@ def get_main():
 @app.post('/')
 def post_url():
     url = request.form.get('url')
-    normalized_url = normalize_url(url)
-    if not validate(normalized_url) or len(normalized_url) > 256:
-        flash('Некорректный url', 'danger'),
+    error = validate_url(url)
+    if error:
+        flash(error, 'danger'),
         return redirect(
             url_for('get_main')
         )
     else:
-        message = insert_to_db(normalized_url)
-        id = get_url_id(normalized_url)
-        flash(message, 'success')
+        status = insert_to_db(url)
+        id = get_url_id(url)
+        flash(status, 'success')
         return redirect(
             url_for('get_url', id=id)
         )
@@ -59,8 +55,16 @@ def post_url():
 
 @app.post('/urls/<int:id>/checks')
 def post_url_check(id):
-    insert_check_to_db(id)
-    flash('Страница успешно проверена', 'success')
+    url = select_url(id)
+    try:
+        req = requests.get(url['name'], timeout=2)
+    except requests.exceptions.ConnectionError:
+        req = None
+    if not req or req.status_code != 200:
+        flash('Произошла ошибка при проверке', 'danger')
+    else:
+        insert_check_to_db(id, req)
+        flash('Страница успешно проверена', 'success')
     return redirect(
         url_for('get_url', id=id)
     )

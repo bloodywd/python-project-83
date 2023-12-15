@@ -66,8 +66,9 @@ def select_urls():
     db = DBInterface(client)
     db.connect()
     query = ("SELECT urls.id, urls.name, urls.created_at, "
-             "MAX(url_checks.created_at) from url_checks RIGHT JOIN "
-             "urls on url_checks.url_id = urls.id GROUP BY urls.id")
+             "MAX(url_checks.created_at), url_checks.status_code "
+             "from url_checks RIGHT JOIN urls "
+             "on url_checks.url_id = urls.id GROUP BY urls.id, url_checks.status_code")
     data = db.select(query)
     db.disconnect()
     return [
@@ -75,7 +76,8 @@ def select_urls():
             'id': url[0],
             'name': url[1],
             'created_at': url[2],
-            'last_check': url[3] if url[3] else ''
+            'last_check': url[3] if url[3] else '',
+            'status_code': url[4] if url[4] else '',
         }
         for url in data
     ]
@@ -109,14 +111,14 @@ def insert_to_db(url):
         return 'Успешно добавлено'
 
 
-def insert_check_to_db(id):
+def insert_check_to_db(id, req):
     client = Client()
     db = DBInterface(client)
     db.connect()
     current_datetime = datetime.now()
     timestamp = current_datetime.strftime('%Y-%m-%d')
-    query = (f"INSERT INTO url_checks (url_id, created_at) "
-             f"VALUES ('{id}', '{timestamp}')")
+    query = (f"INSERT INTO url_checks (url_id, created_at, status_code) "
+             f"VALUES ('{id}', '{timestamp}', '{req.status_code}')")
     db.insert(query)
     db.disconnect()
 
@@ -125,7 +127,7 @@ def select_checks(id):
     client = Client()
     db = DBInterface(client)
     db.connect()
-    query = (f"SELECT id, url_id, created_at FROM url_checks "
+    query = (f"SELECT id, url_id, created_at, status_code FROM url_checks "
              f"WHERE url_id = '{id}'")
     data = db.select(query)
     db.disconnect()
@@ -133,7 +135,8 @@ def select_checks(id):
         {
             'id': check[0],
             'url_id': check[1],
-            'created_at': check[2]
+            'created_at': check[2],
+            'status_code': check[3],
         }
         for check in data[::-1]
     ]
