@@ -67,8 +67,8 @@ def select_urls():
     db.connect()
     query = ("SELECT urls.id, urls.name, urls.created_at, "
              "MAX(url_checks.created_at), url_checks.status_code "
-             "from url_checks RIGHT JOIN urls "
-             "on url_checks.url_id = urls.id GROUP BY urls.id, url_checks.status_code")
+             "from url_checks RIGHT JOIN urls on url_checks.url_id "
+             "= urls.id GROUP BY urls.id, url_checks.status_code")
     data = db.select(query)
     db.disconnect()
     return [
