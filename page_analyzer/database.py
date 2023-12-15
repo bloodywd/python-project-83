@@ -17,7 +17,7 @@ class Client():
     def commit(self):
         self.connection.commit()
 
-    def close(self):
+    def disconnect(self):
         self.cur.close()
         self.connection.close()
 
@@ -28,38 +28,32 @@ class Client():
             return data
 
 
-class Database():
+class DBInterface():
     def __init__(self, client):
         self.client = client
 
-    def select(self, table, target='*', key=None, value=None):
-        if key:
-            query = f"SELECT {target} from {table} WHERE {key} = '{value}'"
-        else:
-            query = f"SELECT {target} from {table}"
+    def select(self, query):
         data = self.client.send_query(query)
         return data
 
-    def insert(self, table, target, values):
-        query = f"INSERT INTO {table} {target} VALUES {values}"
+    def insert(self, query):
         self.client.send_query(query)
         self.client.commit()
 
     def connect(self):
         self.client.connect()
 
-    def close(self):
-        self.client.close()
+    def disconnect(self):
+        self.client.disconnect()
 
 
 def select_url(id):
     client = Client()
-    db = Database(client)
+    db = DBInterface(client)
     db.connect()
-    (name, created_at) = db.select(
-        table='urls', target='name, created_at', key='id', value=id
-    )[0]
-    db.close()
+    query = f"SELECT name, created_at from urls WHERE id = '{id}'"
+    (name, created_at) = db.select(query)[0]
+    db.disconnect()
     return {
         'id': id,
         'name': name,
@@ -69,41 +63,73 @@ def select_url(id):
 
 def select_urls():
     client = Client()
-    db = Database(client)
+    db = DBInterface(client)
     db.connect()
-    (data) = db.select(table='urls')
-    db.close()
-    return (
+    query = (f"SELECT urls.id, urls.name, urls.created_at, MAX(url_checks.created_at) "
+             f"from url_checks RIGHT JOIN urls on url_checks.url_id = urls.id GROUP BY urls.id")
+    data = db.select(query)
+    db.disconnect()
+    return [
         {
             'id': url[0],
             'name': url[1],
-            'created_at': url[2]
+            'created_at': url[2],
+            'last_check': url[3] if url[3] else ''
         }
-        for url in data[::-1]
-    )
+        for url in data
+    ]
 
 
 def get_url_id(url):
     client = Client()
-    db = Database(client)
+    db = DBInterface(client)
     db.connect()
-    (id,) = db.select(table='urls', target='id', key='name', value=url)[0]
-    db.close()
+    query = f"SELECT id from urls WHERE name = '{url}'"
+    (id,) = db.select(query)[0]
+    db.disconnect()
     return id
 
 
 def insert_to_db(url):
     client = Client()
-    db = Database(client)
+    db = DBInterface(client)
     db.connect()
-    if db.select(table='urls', key='name', value=url):
-        db.close()
-        return False
+    query = f"SELECT * from urls WHERE name = '{url}'"
+    if db.select(query):
+        db.disconnect()
+        return 'Страница уже существует'
     else:
         current_datetime = datetime.now()
         timestamp = current_datetime.strftime('%Y-%m-%d')
-        db.insert(
-            table='urls', target='(name, created_at)', values=(url, timestamp)
-        )
-        db.close()
-        return True
+        query = f"INSERT INTO urls (name, created_at) VALUES ('{url}', '{timestamp}')"
+        db.insert(query)
+        db.disconnect()
+        return 'Успешно добавлено'
+
+
+def insert_check_to_db(id):
+    client = Client()
+    db = DBInterface(client)
+    db.connect()
+    current_datetime = datetime.now()
+    timestamp = current_datetime.strftime('%Y-%m-%d')
+    query = f"INSERT INTO url_checks (url_id, created_at) VALUES ('{id}', '{timestamp}')"
+    db.insert(query)
+    db.disconnect()
+
+
+def select_checks(id):
+    client = Client()
+    db = DBInterface(client)
+    db.connect()
+    query = f"SELECT id, url_id, created_at FROM url_checks WHERE url_id = '{id}'"
+    data = db.select(query)
+    db.disconnect()
+    return [
+        {
+            'id': check[0],
+            'url_id': check[1],
+            'created_at': check[2]
+        }
+        for check in data[::-1]
+    ]
