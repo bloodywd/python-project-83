@@ -5,13 +5,13 @@ import os
 DATABASE_URL = os.getenv('DATABASE_URL')
 
 
-class Connection():
+class Client():
     def __init__(self, client=psycopg2, url=DATABASE_URL):
-        self._client = client
-        self._url = url
+        self.client = client
+        self.url = url
 
     def connect(self):
-        self.connection = self._client.connect(self._url)
+        self.connection = self.client.connect(self.url)
         self.cur = self.connection.cursor()
 
     def commit(self):
@@ -29,31 +29,37 @@ class Connection():
 
 
 class Database():
-    def __init__(self, connection):
-        self.connection = connection
+    def __init__(self, client):
+        self.client = client
 
     def select(self, table, target='*', key=None, value=None):
-        self.connection.connect()
         if key:
             query = f"SELECT {target} from {table} WHERE {key} = '{value}'"
         else:
             query = f"SELECT {target} from {table}"
-        data = self.connection.send_query(query)
-        self.connection.close()
+        data = self.client.send_query(query)
         return data
 
     def insert(self, table, target, values):
-        self.connection.connect()
         query = f"INSERT INTO {table} {target} VALUES {values}"
-        self.connection.send_query(query)
-        self.connection.commit()
-        self.connection.close()
+        self.client.send_query(query)
+        self.client.commit()
+
+    def connect(self):
+        self.client.connect()
+
+    def close(self):
+        self.client.close()
 
 
 def select_url(id):
-    connect = Connection()
-    db = Database(connect)
-    (name, created_at) = db.select('urls', 'name, created_at', 'id', id)[0]
+    client = Client()
+    db = Database(client)
+    db.connect()
+    (name, created_at) = db.select(
+        table='urls', target='name, created_at', key='id', value=id
+    )[0]
+    db.close()
     return {
         'id': id,
         'name': name,
@@ -62,28 +68,42 @@ def select_url(id):
 
 
 def select_urls():
-    connect = Connection()
-    db = Database(connect)
-    (data) = db.select('urls')
-    return ({'id': url[0], 'name': url[1], 'created_at': url[2]}
-            for url in data[::-1]
+    client = Client()
+    db = Database(client)
+    db.connect()
+    (data) = db.select(table='urls')
+    db.close()
+    return (
+        {
+            'id': url[0],
+            'name': url[1],
+            'created_at': url[2]
+        }
+        for url in data[::-1]
     )
 
 
 def get_url_id(url):
-    connect = Connection()
-    db = Database(connect)
-    (id,) = db.select('urls', 'id', 'name', url)[0]
+    client = Client()
+    db = Database(client)
+    db.connect()
+    (id,) = db.select(table='urls', target='id', key='name', value=url)[0]
+    db.close()
     return id
 
 
 def insert_to_db(url):
-    connect = Connection()
-    db = Database(connect)
-    if db.select('urls', 'name', 'name', url):
+    client = Client()
+    db = Database(client)
+    db.connect()
+    if db.select(table='urls', key='name', value=url):
+        db.close()
         return False
     else:
         current_datetime = datetime.now()
         timestamp = current_datetime.strftime('%Y-%m-%d')
-        db.insert('urls', '(name, created_at)', (url, timestamp))
+        db.insert(
+            table='urls', target='(name, created_at)', values=(url, timestamp)
+        )
+        db.close()
         return True
