@@ -18,17 +18,25 @@ def validate_url(url):
     return normalized, None
 
 
-def parse(soup):
+def parse_h1(soup):
     try:
         h1 = soup.h1.text
     except (TypeError, AttributeError):
         h1 = ''
+    return h1
+
+
+def parse_title(soup):
     try:
         title = soup.title.text
     except (TypeError, AttributeError):
         title = ''
+    return title
+
+
+def parse_description(soup):
     try:
         description = soup.find("meta", {'name': 'description'})["content"]
     except (TypeError, AttributeError):
         description = ''
-    return h1, title, description
+    return description

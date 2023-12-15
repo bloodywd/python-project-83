@@ -1,7 +1,7 @@
 from datetime import datetime
 import psycopg2
 import os
-from page_analyzer.validate import parse
+from page_analyzer.validate import parse_h1, parse_description, parse_title
 
 DATABASE_URL = os.getenv('DATABASE_URL')
 
@@ -114,14 +114,18 @@ def insert_to_db(url):
 
 
 def insert_check_to_db(id, req, soup):
-    (h1, title, description) = parse(soup)
+    h1 = parse_h1(soup)
+    title = parse_title(soup)
+    description = parse_description(soup)
     client = Client()
     db = DBInterface(client)
     db.connect()
     current_datetime = datetime.now()
     timestamp = current_datetime.strftime('%Y-%m-%d')
-    query = (f"INSERT INTO url_checks (url_id, status_code, h1, title, description, created_at) "
-             f"VALUES ('{id}', '{req.status_code}', '{h1}', '{title}', '{description}', '{timestamp}')")
+    query = (f"INSERT INTO url_checks "
+             f"(url_id, status_code, h1, title, description, created_at) "
+             f"VALUES ('{id}', '{req.status_code}', '{h1}', "
+             f"'{title}', '{description}', '{timestamp}')")
     print(query)
     db.insert(query)
     db.disconnect()
