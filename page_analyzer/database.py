@@ -65,8 +65,9 @@ def select_urls():
     client = Client()
     db = DBInterface(client)
     db.connect()
-    query = (f"SELECT urls.id, urls.name, urls.created_at, MAX(url_checks.created_at) "
-             f"from url_checks RIGHT JOIN urls on url_checks.url_id = urls.id GROUP BY urls.id")
+    query = ("SELECT urls.id, urls.name, urls.created_at, "
+             "MAX(url_checks.created_at) from url_checks RIGHT JOIN "
+             "urls on url_checks.url_id = urls.id GROUP BY urls.id")
     data = db.select(query)
     db.disconnect()
     return [
@@ -101,7 +102,8 @@ def insert_to_db(url):
     else:
         current_datetime = datetime.now()
         timestamp = current_datetime.strftime('%Y-%m-%d')
-        query = f"INSERT INTO urls (name, created_at) VALUES ('{url}', '{timestamp}')"
+        query = (f"INSERT INTO urls (name, created_at) "
+                 f"VALUES ('{url}', '{timestamp}')")
         db.insert(query)
         db.disconnect()
         return 'Успешно добавлено'
@@ -113,7 +115,8 @@ def insert_check_to_db(id):
     db.connect()
     current_datetime = datetime.now()
     timestamp = current_datetime.strftime('%Y-%m-%d')
-    query = f"INSERT INTO url_checks (url_id, created_at) VALUES ('{id}', '{timestamp}')"
+    query = (f"INSERT INTO url_checks (url_id, created_at) "
+             f"VALUES ('{id}', '{timestamp}')")
     db.insert(query)
     db.disconnect()
 
@@ -122,7 +125,8 @@ def select_checks(id):
     client = Client()
     db = DBInterface(client)
     db.connect()
-    query = f"SELECT id, url_id, created_at FROM url_checks WHERE url_id = '{id}'"
+    query = (f"SELECT id, url_id, created_at FROM url_checks "
+             f"WHERE url_id = '{id}'")
     data = db.select(query)
     db.disconnect()
     return [

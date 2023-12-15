@@ -1,8 +1,23 @@
-from flask import Flask, render_template, request, url_for, redirect, flash, get_flashed_messages
+from flask import (
+    Flask,
+    render_template,
+    request,
+    url_for,
+    redirect,
+    flash,
+    get_flashed_messages
+)
+from page_analyzer.database import (
+    select_urls,
+    get_url_id,
+    insert_to_db,
+    select_url,
+    insert_check_to_db,
+    select_checks
+)
 from dotenv import load_dotenv
 import os
 from validators import url as validate
-from page_analyzer.database import select_urls, get_url_id, insert_to_db, select_url, insert_check_to_db, select_checks
 from urllib.parse import urlparse
 
 load_dotenv()
