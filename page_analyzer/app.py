@@ -1,3 +1,4 @@
+from bs4 import BeautifulSoup
 from flask import (
     Flask,
     render_template,
@@ -38,15 +39,16 @@ def get_main():
 @app.post('/')
 def post_url():
     url = request.form.get('url')
-    error = validate_url(url)
+    print(url)
+    (normalized, error) = validate_url(url)
     if error:
         flash(error, 'danger'),
         return redirect(
             url_for('get_main')
         )
     else:
-        status = insert_to_db(url)
-        id = get_url_id(url)
+        status = insert_to_db(normalized)
+        id = get_url_id(normalized)
         flash(status, 'success')
         return redirect(
             url_for('get_url', id=id)
@@ -58,12 +60,13 @@ def post_url_check(id):
     url = select_url(id)
     try:
         req = requests.get(url['name'], timeout=2)
-    except requests.exceptions.ConnectionError:
+    except Exception:
         req = None
-    if not req or req.status_code != 200:
+    if not req:
         flash('Произошла ошибка при проверке', 'danger')
     else:
-        insert_check_to_db(id, req)
+        soup = BeautifulSoup(req.text, 'html.parser')
+        insert_check_to_db(id, req, soup)
         flash('Страница успешно проверена', 'success')
     return redirect(
         url_for('get_url', id=id)

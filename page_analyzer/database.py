@@ -1,6 +1,7 @@
 from datetime import datetime
 import psycopg2
 import os
+from page_analyzer.validate import parse
 
 DATABASE_URL = os.getenv('DATABASE_URL')
 
@@ -68,7 +69,8 @@ def select_urls():
     query = ("SELECT urls.id, urls.name, urls.created_at, "
              "MAX(url_checks.created_at), url_checks.status_code "
              "from url_checks RIGHT JOIN urls on url_checks.url_id "
-             "= urls.id GROUP BY urls.id, url_checks.status_code")
+             "= urls.id GROUP BY urls.id, url_checks.status_code "
+             "ORDER BY urls.id DESC")
     data = db.select(query)
     db.disconnect()
     return [
@@ -111,14 +113,16 @@ def insert_to_db(url):
         return 'Успешно добавлено'
 
 
-def insert_check_to_db(id, req):
+def insert_check_to_db(id, req, soup):
+    (h1, title, description) = parse(soup)
     client = Client()
     db = DBInterface(client)
     db.connect()
     current_datetime = datetime.now()
     timestamp = current_datetime.strftime('%Y-%m-%d')
-    query = (f"INSERT INTO url_checks (url_id, created_at, status_code) "
-             f"VALUES ('{id}', '{timestamp}', '{req.status_code}')")
+    query = (f"INSERT INTO url_checks (url_id, status_code, h1, title, description, created_at) "
+             f"VALUES ('{id}', '{req.status_code}', '{h1}', '{title}', '{description}', '{timestamp}')")
+    print(query)
     db.insert(query)
     db.disconnect()
 
@@ -127,7 +131,7 @@ def select_checks(id):
     client = Client()
     db = DBInterface(client)
     db.connect()
-    query = (f"SELECT id, url_id, created_at, status_code FROM url_checks "
+    query = (f"SELECT * FROM url_checks "
              f"WHERE url_id = '{id}'")
     data = db.select(query)
     db.disconnect()
@@ -135,8 +139,11 @@ def select_checks(id):
         {
             'id': check[0],
             'url_id': check[1],
-            'created_at': check[2],
-            'status_code': check[3],
+            'status_code': check[2],
+            'h1': check[3],
+            'title': check[4],
+            'description': check[5],
+            'created_at': check[6],
         }
         for check in data[::-1]
     ]
