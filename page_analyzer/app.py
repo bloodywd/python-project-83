@@ -6,6 +6,7 @@ from flask import (
     redirect,
     flash,
     get_flashed_messages,
+    abort
 )
 from page_analyzer.database import (
     select_urls,
@@ -77,7 +78,7 @@ def get_url(id):
     messages = get_flashed_messages(with_categories=True)
     url = select_url(id)
     if not url:
-        return 'Не найдено', 404
+        abort(404)
     checks = select_checks(id)
     return render_template(
         'url.html',
@@ -94,3 +95,7 @@ def get_urls():
         'urls.html',
         urls=urls
     )
+
+@app.errorhandler(404)
+def page_not_found(error):
+    return render_template('404.html')
