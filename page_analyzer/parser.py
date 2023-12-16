@@ -1,25 +1,18 @@
 from bs4 import BeautifulSoup
 
 
-class Parser():
-    def __init__(self, text):
-        self.html = BeautifulSoup(text, 'html.parser')
+def get_args(text):
+    html = BeautifulSoup(text, 'html.parser')
 
-    def parse_h1(self):
-        h1_element = self.html.find('h1')
-        return h1_element.text if h1_element else ''
+    h1_tag = html.find('h1')
+    h1 = h1_tag.text if h1_tag else ''
 
-    def parse_title(self):
-        title_element = self.html.find('title')
-        return title_element.text if title_element else ''
+    title_tag = html.find('title')
+    title = title_tag.text if title_tag else ''
 
-    def parse_description(self):
-        description = ''
-        meta_tag = self.html.find("meta", {'name': 'description'})
-        if meta_tag:
-            description = meta_tag.get("content", '')
-        return description
+    description = ''
+    meta_tag = html.find("meta", {'name': 'description'})
+    if meta_tag:
+        description = meta_tag.get("content", '')
 
-    def get_args(self):
-        return self.parse_h1(), self.parse_title(), self.parse_description()
-
+    return h1, title, description

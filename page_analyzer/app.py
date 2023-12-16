@@ -39,7 +39,8 @@ def get_main():
 def post_url():
     url = request.form.get('url')
     validation = Validator(url)
-    if not (validation.has_symbols().normalize().is_not_too_long().is_correct().is_valid()):
+    if not (validation.has_symbols().normalize().
+            is_not_too_long().is_correct().is_valid()):
         flash(validation.get_error(), 'danger'),
         return redirect(
             url_for('get_main')

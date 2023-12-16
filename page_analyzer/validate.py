@@ -39,5 +39,3 @@ class Validator():
 
     def get_url(self):
         return self.url
-
-

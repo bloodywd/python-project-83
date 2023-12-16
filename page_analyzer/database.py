@@ -1,10 +1,7 @@
 from datetime import datetime
 import psycopg2
 import os
-
-from bs4 import BeautifulSoup
-
-from page_analyzer.parser import Parser
+from page_analyzer.parser import get_args
 
 
 DATABASE_URL = os.getenv('DATABASE_URL')
@@ -33,11 +30,11 @@ class DBInterface():
         self.connection.commit()
 
 
-def select_url(id):
-    client = DBInterface()
+def select_url(id, db=DBInterface):
+    client = db()
     client.connect()
     query = f"SELECT name, created_at from urls WHERE id = '{id}'"
-    (name, created_at) = client.select(query)[0]
+    (name, created_at, *values) = client.select(query)[0]
     client.disconnect()
     return {
         'id': id,
@@ -46,8 +43,8 @@ def select_url(id):
     }
 
 
-def select_urls():
-    client = DBInterface()
+def select_urls(db=DBInterface):
+    client = db()
     client.connect()
     query = ("SELECT urls.id, urls.name, urls.created_at, "
              "MAX(url_checks.created_at), url_checks.status_code "
@@ -68,17 +65,17 @@ def select_urls():
     ]
 
 
-def get_url_id(url):
-    client = DBInterface()
+def get_url_id(url, db=DBInterface):
+    client = db()
     client.connect()
     query = f"SELECT id from urls WHERE name = '{url}'"
-    (id,) = client.select(query)[0]
+    (id, *values) = client.select(query)[0]
     client.disconnect()
     return id
 
 
-def insert_to_db(url):
-    client = DBInterface()
+def insert_to_db(url, db=DBInterface):
+    client = db()
     client.connect()
     query = f"SELECT * from urls WHERE name = '{url}'"
     if client.select(query):
@@ -94,10 +91,9 @@ def insert_to_db(url):
         return 'Успешно добавлено'
 
 
-def insert_check_to_db(id, req):
-    parser = Parser(req.text)
-    h1, title, description = parser.get_args()
-    client = DBInterface()
+def insert_check_to_db(id, req, db=DBInterface):
+    h1, title, description = get_args(req.text)
+    client = db()
     client.connect()
     current_datetime = datetime.now()
     timestamp = current_datetime.strftime('%Y-%m-%d')
@@ -109,8 +105,8 @@ def insert_check_to_db(id, req):
     client.disconnect()
 
 
-def select_checks(id):
-    client = DBInterface()
+def select_checks(id, db=DBInterface):
+    client = db()
     client.connect()
     query = (f"SELECT * FROM url_checks "
              f"WHERE url_id = '{id}'")
