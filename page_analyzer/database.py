@@ -13,7 +13,10 @@ def select_url(id):
     cur = connection.cursor()
     cur.execute("SELECT name, created_at from urls WHERE id = (%s)",
                 (str(id), ))
-    (name, created_at) = cur.fetchall()[0]
+    data = cur.fetchall()
+    if data == []:
+        return None
+    (name, created_at) = data[0]
     cur.close()
     connection.close()
     return {

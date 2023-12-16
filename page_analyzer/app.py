@@ -5,7 +5,7 @@ from flask import (
     url_for,
     redirect,
     flash,
-    get_flashed_messages
+    get_flashed_messages,
 )
 from page_analyzer.database import (
     select_urls,
@@ -75,9 +75,9 @@ def post_url_check(id):
 def get_url(id):
     messages = get_flashed_messages(with_categories=True)
     url = select_url(id)
+    if not url:
+        return 'Не найдено', 404
     checks = select_checks(id)
-    if not url():
-        redirect('Не найдено', 404)
     return render_template(
         'url.html',
         messages=messages,
