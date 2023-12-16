@@ -63,8 +63,9 @@ def post_url_check(id):
     except Exception:
         flash('Произошла ошибка при проверке', 'danger')
     else:
-        insert_check_to_db(id, req)
-        flash('Страница успешно проверена', 'success')
+        if req.status_code == 200:
+            insert_check_to_db(id, req)
+            flash('Страница успешно проверена', 'success')
     return redirect(
         url_for('get_url', id=id)
     )
@@ -75,6 +76,8 @@ def get_url(id):
     messages = get_flashed_messages(with_categories=True)
     url = select_url(id)
     checks = select_checks(id)
+    if not url():
+        redirect('Не найдено', 404)
     return render_template(
         'url.html',
         messages=messages,
