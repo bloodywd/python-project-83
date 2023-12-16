@@ -8,14 +8,7 @@ from flask import (
     get_flashed_messages,
     abort
 )
-from page_analyzer.database import (
-    select_urls,
-    get_url_id,
-    insert_to_db,
-    select_url,
-    insert_check_to_db,
-    select_checks
-)
+from page_analyzer.database import DataBase
 from page_analyzer.validate import Validator
 from dotenv import load_dotenv
 import os
@@ -46,9 +39,11 @@ def post_url():
                                messages=messages,
                                value=url), 422
     else:
+        db = DataBase()
         url = validation.get_url()
-        status = insert_to_db(url)
-        id = get_url_id(url)
+        status = db.insert_to_db(url)
+        id = db.get_url_id(url)
+        db.close()
         flash(status, 'success')
         return redirect(
             url_for('get_url', id=id)
@@ -57,17 +52,19 @@ def post_url():
 
 @app.post('/urls/<int:id>/checks')
 def post_url_check(id):
-    url = select_url(id)
+    db = DataBase()
+    url = db.select_url(id)
     try:
         req = requests.get(url['name'], timeout=1)
     except Exception:
         flash('Произошла ошибка при проверке', 'danger')
     else:
         if req.status_code == 200:
-            insert_check_to_db(id, req)
+            db.insert_check_to_db(id, req)
             flash('Страница успешно проверена', 'success')
         else:
             flash('Произошла ошибка при проверке', 'danger')
+    db.close()
     return redirect(
         url_for('get_url', id=id)
     )
@@ -75,11 +72,13 @@ def post_url_check(id):
 
 @app.route('/urls/<int:id>')
 def get_url(id):
+    db = DataBase()
     messages = get_flashed_messages(with_categories=True)
-    url = select_url(id)
+    url = db.select_url(id)
     if not url:
         abort(404)
-    checks = select_checks(id)
+    checks = db.select_checks(id)
+    db.close()
     return render_template(
         'url.html',
         messages=messages,
@@ -90,12 +89,15 @@ def get_url(id):
 
 @app.route('/urls')
 def get_urls():
-    urls = select_urls()
+    db = DataBase()
+    urls = db.select_urls()
+    db.close()
     return render_template(
         'urls.html',
         urls=urls
     )
 
+
 @app.errorhandler(404)
 def page_not_found(error):
-    return render_template('404.html')
+    return render_template('404.html'), 404
