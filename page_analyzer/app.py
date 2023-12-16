@@ -66,6 +66,8 @@ def post_url_check(id):
         if req.status_code == 200:
             insert_check_to_db(id, req)
             flash('Страница успешно проверена', 'success')
+        else:
+            flash('Произошла ошибка при проверке', 'danger')
     return redirect(
         url_for('get_url', id=id)
     )
