@@ -7,35 +7,14 @@ from page_analyzer.parser import get_args
 DATABASE_URL = os.getenv('DATABASE_URL')
 
 
-class DBInterface():
-    def __init__(self, client=psycopg2):
-        self.client = client
-        self.url = os.getenv('DATABASE_URL')
-
-    def connect(self):
-        self.connection = self.client.connect(self.url)
-        self.cur = self.connection.cursor()
-
-    def disconnect(self):
-        self.cur.close()
-        self.connection.close()
-
-    def select(self, query):
-        self.cur.execute(query)
-        data = self.cur.fetchall()
-        return data
-
-    def insert(self, query):
-        self.cur.execute(query)
-        self.connection.commit()
-
-
-def select_url(id, db=DBInterface):
-    client = db()
-    client.connect()
-    query = f"SELECT name, created_at from urls WHERE id = '{id}'"
-    (name, created_at, *values) = client.select(query)[0]
-    client.disconnect()
+def select_url(id):
+    connection = psycopg2.connect(DATABASE_URL)
+    cur = connection.cursor()
+    cur.execute("SELECT name, created_at from urls WHERE id = (%s)",
+                (str(id), ))
+    (name, created_at) = cur.fetchall()[0]
+    cur.close()
+    connection.close()
     return {
         'id': id,
         'name': name,
@@ -43,16 +22,18 @@ def select_url(id, db=DBInterface):
     }
 
 
-def select_urls(db=DBInterface):
-    client = db()
-    client.connect()
-    query = ("SELECT urls.id, urls.name, urls.created_at, "
-             "MAX(url_checks.created_at), url_checks.status_code "
-             "from url_checks RIGHT JOIN urls on url_checks.url_id "
-             "= urls.id GROUP BY urls.id, url_checks.status_code "
-             "ORDER BY urls.id DESC")
-    data = client.select(query)
-    client.disconnect()
+def select_urls():
+    connection = psycopg2.connect(DATABASE_URL)
+    cur = connection.cursor()
+    cur.execute("SELECT urls.id, urls.name, urls.created_at, "
+                "MAX(url_checks.created_at), url_checks.status_code "
+                "from url_checks RIGHT JOIN urls on url_checks.url_id = "
+                "urls.id GROUP BY urls.id, url_checks.status_code "
+                "ORDER BY urls.id DESC")
+    data = cur.fetchall()
+    print(data)
+    cur.close()
+    connection.close()
     return [
         {
             'id': url[0],
@@ -65,53 +46,57 @@ def select_urls(db=DBInterface):
     ]
 
 
-def get_url_id(url, db=DBInterface):
-    client = db()
-    client.connect()
-    query = f"SELECT id from urls WHERE name = '{url}'"
-    (id, *values) = client.select(query)[0]
-    client.disconnect()
+def get_url_id(url):
+    connection = psycopg2.connect(DATABASE_URL)
+    cur = connection.cursor()
+    cur.execute("SELECT id from urls WHERE name = (%s)", (url, ))
+    (id, ) = cur.fetchall()[0]
+    cur.close()
+    connection.close()
     return id
 
 
-def insert_to_db(url, db=DBInterface):
-    client = db()
-    client.connect()
-    query = f"SELECT * from urls WHERE name = '{url}'"
-    if client.select(query):
-        client.disconnect()
+def insert_to_db(url):
+    connection = psycopg2.connect(DATABASE_URL)
+    cur = connection.cursor()
+    cur.execute("SELECT * from urls WHERE name = (%s)", (url,))
+    data = cur.fetchall()
+    if data:
+        cur.close()
+        connection.close()
         return 'Страница уже существует'
     else:
         current_datetime = datetime.now()
         timestamp = current_datetime.strftime('%Y-%m-%d')
-        query = (f'INSERT INTO urls (name, created_at) '
-                 f'VALUES ("{url}", "{timestamp}")')
-        client.insert(query)
-        client.disconnect()
+        cur.execute("INSERT INTO urls (name, created_at) VALUES (%s, %s)",
+                    (url, timestamp))
+        connection.commit()
+        cur.close()
+        connection.close()
         return 'Страница успешно добавлена'
 
 
-def insert_check_to_db(id, req, db=DBInterface):
+def insert_check_to_db(id, req):
     h1, title, description = get_args(req.text)
-    client = db()
-    client.connect()
+    connection = psycopg2.connect(DATABASE_URL)
+    cur = connection.cursor()
     current_datetime = datetime.now()
     timestamp = current_datetime.strftime('%Y-%m-%d')
-    query = (f'INSERT INTO url_checks '
-             f'(url_id, status_code, h1, title, description, created_at) '
-             f'VALUES ("{id}", "{req.status_code}", "{h1}", '
-             f'"{title}", "{description}", "{timestamp}")')
-    client.insert(query)
-    client.disconnect()
+    cur.execute('INSERT INTO url_checks (url_id, status_code, h1, title, '
+                'description, created_at) VALUES (%s, %s, %s, %s, %s, %s)',
+                (id, req.status_code, h1, title, description, timestamp))
+    connection.commit()
+    cur.close()
+    connection.close()
 
 
-def select_checks(id, db=DBInterface):
-    client = db()
-    client.connect()
-    query = (f"SELECT * FROM url_checks "
-             f"WHERE url_id = '{id}'")
-    data = client.select(query)
-    client.disconnect()
+def select_checks(id):
+    connection = psycopg2.connect(DATABASE_URL)
+    cur = connection.cursor()
+    cur.execute("SELECT * FROM url_checks WHERE url_id = (%s)", (id, ))
+    data = cur.fetchall()
+    cur.close()
+    connection.close()
     return [
         {
             'id': check[0],
