@@ -28,11 +28,8 @@ app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
 
 @app.route('/')
 def get_main():
-    messages = get_flashed_messages(with_categories=True)
     return render_template(
         'index.html',
-        messages=messages,
-        value=''
     )
 
 
@@ -42,11 +39,11 @@ def post_url():
     validation = Validator(url)
     if not (validation.has_symbols().normalize().
             is_not_too_long().is_correct().is_valid()):
-        flash(validation.get_error(), 'danger'),
-        return render_template(
-            url_for('get_main'),
-            value=url
-        )
+        flash(validation.get_error(), 'danger')
+        messages = get_flashed_messages(with_categories=True)
+        return render_template('index.html',
+                               messages=messages,
+                               value=url), 422
     else:
         url = validation.get_url()
         status = insert_to_db(url)
