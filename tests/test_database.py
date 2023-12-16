@@ -37,7 +37,7 @@ def test_insert_to_db():
     result1 = insert_to_db(url1, FakeClient)
     result2 = insert_to_db(url2, FakeClient)
     assert result1 == 'Страница уже существует'
-    assert result2 == 'Успешно добавлено'
+    assert result2 == 'Страница успешно добавлена'
 
 
 def test_select_checks():

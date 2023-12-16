@@ -59,8 +59,8 @@ def post_url():
 def post_url_check(id):
     url = select_url(id)
     try:
-        req = requests.get(url['name'], timeout=2)
-    except requests.exceptions.RequestException:
+        req = requests.get(url['name'], timeout=3)
+    except Exception:
         flash('Произошла ошибка при проверке', 'danger')
     else:
         insert_check_to_db(id, req)
