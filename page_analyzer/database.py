@@ -5,8 +5,8 @@ from page_analyzer.parser import get_args
 
 
 class DataBase():
-    def __init__(self, client=psycopg2, link=os.getenv('DATABASE_URL')):
-        self.connection = client.connect(link)
+    def __init__(self, client=psycopg2):
+        self.connection = client.connect(os.getenv('DATABASE_URL'))
         self.cur = self.connection.cursor()
 
     def close(self):
@@ -31,12 +31,12 @@ class DataBase():
 
     def select_urls(self):
         try:
-            self.cur.execute("SELECT urls.id, urls.name, urls.created_at, "
-                             "MAX(url_checks.created_at), "
-                             "url_checks.status_code from url_checks "
-                             "RIGHT JOIN urls on url_checks.url_id = "
-                             "urls.id GROUP BY urls.id, "
-                             "url_checks.status_code ORDER BY urls.id DESC")
+            self.cur.execute(
+                "SELECT urls.id, urls.name, urls.created_at, MAX(url_checks."
+                "created_at), url_checks.status_code from url_checks RIGHT "
+                "JOIN urls on url_checks.url_id = urls.id GROUP BY urls.id, "
+                "url_checks.status_code ORDER BY urls.id DESC"
+            )
             data = self.cur.fetchall()
         except psycopg2.OperationalError:
             print('Ошибка чтения из БД')
@@ -83,11 +83,10 @@ class DataBase():
         current_datetime = datetime.now()
         timestamp = current_datetime.strftime('%Y-%m-%d')
         try:
-            self.cur.execute('INSERT INTO url_checks (url_id, status_code, '
-                             'h1, title, description, created_at) VALUES '
-                             '(%s, %s, %s, %s, %s, %s)',
-                             (id, req.status_code, h1, title, description,
-                              timestamp))
+            self.cur.execute(
+                'INSERT INTO url_checks (url_id, status_code, h1, title, '
+                'description, created_at) VALUES (%s, %s, %s, %s, %s, %s)',
+                (id, req.status_code, h1, title, description, timestamp))
             self.connection.commit()
         except psycopg2.OperationalError:
             print('Ошибка записи в БД')
