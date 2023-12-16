@@ -32,6 +32,7 @@ def get_main():
     return render_template(
         'index.html',
         messages=messages,
+        value=''
     )
 
 
@@ -60,7 +61,7 @@ def post_url():
 def post_url_check(id):
     url = select_url(id)
     try:
-        req = requests.get(url['name'], timeout=3)
+        req = requests.get(url['name'], timeout=1)
     except Exception:
         flash('Произошла ошибка при проверке', 'danger')
     else:
