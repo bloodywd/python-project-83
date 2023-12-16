@@ -4,11 +4,12 @@ import os
 from page_analyzer.parser import get_args
 
 
-DATABASE_URL = os.getenv('DATABASE_URL')
+def get_connection():
+    return psycopg2.connect(os.getenv('DATABASE_URL'))
 
 
 def select_url(id):
-    connection = psycopg2.connect(DATABASE_URL)
+    connection = get_connection()
     cur = connection.cursor()
     cur.execute("SELECT name, created_at from urls WHERE id = (%s)",
                 (str(id), ))
@@ -23,7 +24,7 @@ def select_url(id):
 
 
 def select_urls():
-    connection = psycopg2.connect(DATABASE_URL)
+    connection = get_connection()
     cur = connection.cursor()
     cur.execute("SELECT urls.id, urls.name, urls.created_at, "
                 "MAX(url_checks.created_at), url_checks.status_code "
@@ -31,7 +32,6 @@ def select_urls():
                 "urls.id GROUP BY urls.id, url_checks.status_code "
                 "ORDER BY urls.id DESC")
     data = cur.fetchall()
-    print(data)
     cur.close()
     connection.close()
     return [
@@ -47,7 +47,7 @@ def select_urls():
 
 
 def get_url_id(url):
-    connection = psycopg2.connect(DATABASE_URL)
+    connection = get_connection()
     cur = connection.cursor()
     cur.execute("SELECT id from urls WHERE name = (%s)", (url, ))
     (id, ) = cur.fetchall()[0]
@@ -57,7 +57,7 @@ def get_url_id(url):
 
 
 def insert_to_db(url):
-    connection = psycopg2.connect(DATABASE_URL)
+    connection = get_connection()
     cur = connection.cursor()
     cur.execute("SELECT * from urls WHERE name = (%s)", (url,))
     data = cur.fetchall()
@@ -78,7 +78,7 @@ def insert_to_db(url):
 
 def insert_check_to_db(id, req):
     h1, title, description = get_args(req.text)
-    connection = psycopg2.connect(DATABASE_URL)
+    connection = get_connection()
     cur = connection.cursor()
     current_datetime = datetime.now()
     timestamp = current_datetime.strftime('%Y-%m-%d')
@@ -91,7 +91,7 @@ def insert_check_to_db(id, req):
 
 
 def select_checks(id):
-    connection = psycopg2.connect(DATABASE_URL)
+    connection = get_connection()
     cur = connection.cursor()
     cur.execute("SELECT * FROM url_checks WHERE url_id = (%s)", (id, ))
     data = cur.fetchall()
