@@ -1,7 +1,7 @@
 from datetime import datetime
 import psycopg2
 import os
-from page_analyzer.parser import get_args
+from page_analyzer.parser import Parser
 
 
 class DataBase():
@@ -79,7 +79,10 @@ class DataBase():
             return 'Страница успешно добавлена'
 
     def insert_check_to_db(self, id, req):
-        h1, title, description = get_args(req.text)
+        parser = Parser(req.text)
+        h1 = parser.get_h1()
+        title = parser.get_title()
+        description = parser.get_description()
         current_datetime = datetime.now()
         timestamp = current_datetime.strftime('%Y-%m-%d')
         try:
