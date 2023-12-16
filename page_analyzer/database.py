@@ -88,7 +88,7 @@ def insert_to_db(url, db=DBInterface):
                  f"VALUES ('{url}', '{timestamp}')")
         client.insert(query)
         client.disconnect()
-        return 'Успешно добавлено'
+        return 'Страница успешно добавлена'
 
 
 def insert_check_to_db(id, req, db=DBInterface):
