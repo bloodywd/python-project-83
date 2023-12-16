@@ -10,7 +10,7 @@ PATH = os.path.join(os.path.dirname(__file__), 'fixtures')
     "file,h1,title,description",
     [
         ('parser_test1.html', 'Header', 'Title', 'content description'),
-        ('parser_test2.html', '', '', ''),
+        ('parser_test2.html', None, None, None),
     ],
 )
 def test_get_args(file, h1, title, description):
