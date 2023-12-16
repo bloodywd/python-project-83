@@ -1,4 +1,3 @@
-from bs4 import BeautifulSoup
 from flask import (
     Flask,
     render_template,
@@ -16,7 +15,7 @@ from page_analyzer.database import (
     insert_check_to_db,
     select_checks
 )
-from page_analyzer.validate import validate_url
+from page_analyzer.validate import Validator
 from dotenv import load_dotenv
 import os
 import requests
@@ -39,16 +38,16 @@ def get_main():
 @app.post('/')
 def post_url():
     url = request.form.get('url')
-    print(url)
-    (normalized, error) = validate_url(url)
-    if error:
-        flash(error, 'danger'),
+    validation = Validator(url)
+    if not (validation.has_symbols().normalize().is_not_too_long().is_correct().is_valid()):
+        flash(validation.get_error(), 'danger'),
         return redirect(
             url_for('get_main')
         )
     else:
-        status = insert_to_db(normalized)
-        id = get_url_id(normalized)
+        url = validation.get_url()
+        status = insert_to_db(url)
+        id = get_url_id(url)
         flash(status, 'success')
         return redirect(
             url_for('get_url', id=id)
@@ -60,13 +59,10 @@ def post_url_check(id):
     url = select_url(id)
     try:
         req = requests.get(url['name'], timeout=2)
-    except Exception:
-        req = None
-    if not req:
+    except requests.exceptions.RequestException:
         flash('Произошла ошибка при проверке', 'danger')
     else:
-        soup = BeautifulSoup(req.text, 'html.parser')
-        insert_check_to_db(id, req, soup)
+        insert_check_to_db(id, req)
         flash('Страница успешно проверена', 'success')
     return redirect(
         url_for('get_url', id=id)
