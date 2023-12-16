@@ -8,7 +8,7 @@ from flask import (
     get_flashed_messages,
     abort
 )
-from page_analyzer.database import DataBase
+from page_analyzer.database import PageAnalyzerDataBase
 from page_analyzer.validate import Validator
 from dotenv import load_dotenv
 import os
@@ -39,10 +39,10 @@ def post_url():
                                messages=messages,
                                value=url), 422
     else:
-        db = DataBase()
+        db = PageAnalyzerDataBase()
         url = validation.get_url()
         status = db.insert_to_db(url)
-        id = db.get_url_id(url)
+        id = db.select_url_id(url)
         db.close()
         flash(status, 'success')
         return redirect(
@@ -52,7 +52,7 @@ def post_url():
 
 @app.post('/urls/<int:id>/checks')
 def post_url_check(id):
-    db = DataBase()
+    db = PageAnalyzerDataBase()
     url = db.select_url(id)
     try:
         req = requests.get(url['name'], timeout=1)
@@ -72,7 +72,7 @@ def post_url_check(id):
 
 @app.route('/urls/<int:id>')
 def get_url(id):
-    db = DataBase()
+    db = PageAnalyzerDataBase()
     messages = get_flashed_messages(with_categories=True)
     url = db.select_url(id)
     if not url:
@@ -89,7 +89,7 @@ def get_url(id):
 
 @app.route('/urls')
 def get_urls():
-    db = DataBase()
+    db = PageAnalyzerDataBase()
     urls = db.select_urls()
     db.close()
     return render_template(

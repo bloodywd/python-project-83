@@ -5,21 +5,35 @@ from page_analyzer.parser import Parser
 
 
 class DataBase():
-    def __init__(self, client=psycopg2):
-        self.connection = client.connect(os.getenv('DATABASE_URL'))
-        self.cur = self.connection.cursor()
-
     def close(self):
         self.cur.close()
         self.connection.close()
 
-    def select_url(self, id):
+    def select(self, query, args=None):
         try:
-            self.cur.execute("SELECT name, created_at from urls "
-                             "WHERE id = (%s)", (id,))
+            self.cur.execute(query, args)
             data = self.cur.fetchall()
         except psycopg2.OperationalError:
             print('Ошибка чтения из БД')
+        return data
+
+    def insert(self, query, args=None):
+        try:
+            self.cur.execute(query, args)
+            self.connection.commit()
+        except psycopg2.OperationalError:
+            print('Ошибка записи в БД')
+
+
+class PageAnalyzerDataBase(DataBase):
+    def __init__(self, client=psycopg2):
+        self.connection = client.connect(os.getenv('DATABASE_URL'))
+        self.cur = self.connection.cursor()
+
+    def select_url(self, id):
+        query = "SELECT name, created_at from urls WHERE id = (%s)"
+        args = (id,)
+        data = self.select(query, args)
         if not data:
             return None
         (name, created_at) = data[0]
@@ -30,16 +44,12 @@ class DataBase():
         }
 
     def select_urls(self):
-        try:
-            self.cur.execute(
-                "SELECT urls.id, urls.name, urls.created_at, MAX(url_checks."
-                "created_at), url_checks.status_code from url_checks RIGHT "
-                "JOIN urls on url_checks.url_id = urls.id GROUP BY urls.id, "
-                "url_checks.status_code ORDER BY urls.id DESC"
-            )
-            data = self.cur.fetchall()
-        except psycopg2.OperationalError:
-            print('Ошибка чтения из БД')
+        query = "SELECT urls.id, urls.name, urls.created_at, " \
+                "MAX(url_checks.created_at), url_checks.status_code " \
+                "from url_checks RIGHT JOIN urls on url_checks.url_id = " \
+                "urls.id GROUP BY urls.id, url_checks.status_code " \
+                "ORDER BY urls.id DESC"
+        data = self.select(query)
         return [
             {
                 'id': url[0],
@@ -51,31 +61,25 @@ class DataBase():
             for url in data
         ]
 
-    def get_url_id(self, url):
-        try:
-            self.cur.execute("SELECT id from urls WHERE name = (%s)", (url,))
-            (id,) = self.cur.fetchall()[0]
-        except psycopg2.OperationalError:
-            print('Ошибка чтения из БД')
+    def select_url_id(self, url):
+        query = "SELECT id from urls WHERE name = (%s)"
+        args = (url,)
+        data = self.select(query, args)
+        (id,) = data[0]
         return id
 
     def insert_to_db(self, url):
-        try:
-            self.cur.execute("SELECT * from urls WHERE name = (%s)", (url,))
-            data = self.cur.fetchall()
-        except psycopg2.OperationalError:
-            print('Ошибка чтения из БД')
+        query = "SELECT * from urls WHERE name = (%s)"
+        args = (url,)
+        data = self.select(query, args)
         if data:
             return 'Страница уже существует'
         else:
             current_datetime = datetime.now()
             timestamp = current_datetime.strftime('%Y-%m-%d')
-            try:
-                self.cur.execute("INSERT INTO urls (name, created_at) "
-                                 "VALUES (%s, %s)", (url, timestamp))
-                self.connection.commit()
-            except psycopg2.OperationalError:
-                print('Ошибка записи в БД')
+            query = "INSERT INTO urls (name, created_at) VALUES (%s, %s)"
+            args = (url, timestamp)
+            self.insert(query, args)
             return 'Страница успешно добавлена'
 
     def insert_check_to_db(self, id, req):
@@ -85,22 +89,15 @@ class DataBase():
         description = parser.get_description()
         current_datetime = datetime.now()
         timestamp = current_datetime.strftime('%Y-%m-%d')
-        try:
-            self.cur.execute(
-                'INSERT INTO url_checks (url_id, status_code, h1, title, '
-                'description, created_at) VALUES (%s, %s, %s, %s, %s, %s)',
-                (id, req.status_code, h1, title, description, timestamp))
-            self.connection.commit()
-        except psycopg2.OperationalError:
-            print('Ошибка записи в БД')
+        query = "INSERT INTO url_checks (url_id, status_code, h1, title, " \
+                "description, created_at) VALUES (%s, %s, %s, %s, %s, %s)"
+        args = (id, req.status_code, h1, title, description, timestamp)
+        self.insert(query, args)
 
     def select_checks(self, id):
-        try:
-            self.cur.execute("SELECT * FROM url_checks "
-                             "WHERE url_id = (%s)", (id,))
-            data = self.cur.fetchall()
-        except psycopg2.OperationalError:
-            print('Ошибка чтения из БД')
+        query = "SELECT * FROM url_checks WHERE url_id = (%s)"
+        args = (id,)
+        data = self.select(query, args)
         return [
             {
                 'id': check[0],
