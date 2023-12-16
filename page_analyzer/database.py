@@ -15,7 +15,9 @@ class DataBase():
             data = self.cur.fetchall()
         except psycopg2.OperationalError:
             print('Ошибка чтения из БД')
-        return data
+            self.connection.rollback()
+        else:
+            return data
 
     def insert(self, query, args=None):
         try:
@@ -23,6 +25,7 @@ class DataBase():
             self.connection.commit()
         except psycopg2.OperationalError:
             print('Ошибка записи в БД')
+            self.connection.rollback()
 
 
 class PageAnalyzerDataBase(DataBase):
