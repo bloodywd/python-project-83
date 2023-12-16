@@ -84,8 +84,8 @@ def insert_to_db(url, db=DBInterface):
     else:
         current_datetime = datetime.now()
         timestamp = current_datetime.strftime('%Y-%m-%d')
-        query = (f"INSERT INTO urls (name, created_at) "
-                 f"VALUES ('{url}', '{timestamp}')")
+        query = (f'INSERT INTO urls (name, created_at) '
+                 f'VALUES ("{url}", "{timestamp}")')
         client.insert(query)
         client.disconnect()
         return 'Страница успешно добавлена'
@@ -97,10 +97,10 @@ def insert_check_to_db(id, req, db=DBInterface):
     client.connect()
     current_datetime = datetime.now()
     timestamp = current_datetime.strftime('%Y-%m-%d')
-    query = (f"INSERT INTO url_checks "
-             f"(url_id, status_code, h1, title, description, created_at) "
-             f"VALUES ('{id}', '{req.status_code}', '{h1}', "
-             f"'{title}', '{description}', '{timestamp}')")
+    query = (f'INSERT INTO url_checks '
+             f'(url_id, status_code, h1, title, description, created_at) '
+             f'VALUES ("{id}", "{req.status_code}", "{h1}", '
+             f'"{title}", "{description}", "{timestamp}")')
     client.insert(query)
     client.disconnect()
 
