@@ -33,7 +33,7 @@ def get_main():
     )
 
 
-@app.post('/')
+@app.post('/urls')
 def post_url():
     url = request.form.get('url')
     validation = Validator(url)
