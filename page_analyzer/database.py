@@ -8,9 +8,9 @@ DATABASE_URL = os.getenv('DATABASE_URL')
 
 
 class DBInterface():
-    def __init__(self, client=psycopg2, url=DATABASE_URL):
+    def __init__(self, client=psycopg2):
         self.client = client
-        self.url = url
+        self.url = os.getenv('DATABASE_URL')
 
     def connect(self):
         self.connection = self.client.connect(self.url)
