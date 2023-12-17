@@ -1,11 +1,19 @@
 [tool.poetry]
 name = "hexlet-code"
 version = "0.1.0"
-description = ""
-authors = ["bloodywd <bloodyforreal@gmail.com>"]
+description = "Page analyzer is a small web-interface application for SEO quality assurance tests similar to PageSpeed Insights."
+authors = ["Evgeny Stepukov <bloodyforreal@gmail.com>"]
 readme = "README.md"
 packages = [
   { include = "page_analyzer" },
+]
+classifiers = [
+  "Environment :: Web Environment",
+  "Framework :: Flask",
+  "Natural Language :: English",
+  "Operating System :: OS Independent",
+  "Programming Language :: Python",
+  "Topic :: Internet :: WWW/HTTP :: Site Management :: Link Checking",
 ]
 
 [tool.poetry.dependencies]
