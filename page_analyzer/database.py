@@ -7,10 +7,10 @@ def get_url(conn, id):
         query = "SELECT name, created_at from urls WHERE id = (%s)"
         args = (id,)
         cur.execute(query, args)
-        data = cur.fetchall()
+        data = cur.fetchone()
     if not data:
         return None
-    (name, created_at) = data[0]
+    (name, created_at) = data
     return {
         'id': id,
         'name': name,
@@ -19,6 +19,7 @@ def get_url(conn, id):
 
 
 def get_urls(conn):
+    data = []
     query = "SELECT urls.id, urls.name, urls.created_at, " \
             "MAX(url_checks.created_at), url_checks.status_code " \
             "from url_checks RIGHT JOIN urls on url_checks.url_id = " \
@@ -26,17 +27,18 @@ def get_urls(conn):
             "ORDER BY urls.id DESC"
     with conn.cursor() as cur:
         cur.execute(query)
-        data = cur.fetchall()
-    return [
-        {
-            'id': url[0],
-            'name': url[1],
-            'created_at': url[2],
-            'last_check': url[3],
-            'status_code': url[4]
-        }
-        for url in data
-    ]
+        while True:
+            row = cur.fetchone()
+            if not row:
+                break
+            data.append({
+                'id': row[0],
+                'name': row[1],
+                'created_at': row[2],
+                'last_check': row[3],
+                'status_code': row[4]
+            })
+    return data
 
 
 def get_url_id(conn, url):
@@ -44,8 +46,8 @@ def get_url_id(conn, url):
     args = (url,)
     with conn.cursor() as cur:
         cur.execute(query, args)
-        data = cur.fetchall()
-    (id,) = data[0]
+        data = cur.fetchone()
+    (id,) = data
     return id
 
 
@@ -54,7 +56,7 @@ def insert_url_to_db(conn, url):
     args = (url,)
     with conn.cursor() as cur:
         cur.execute(query, args)
-        data = cur.fetchall()
+        data = cur.fetchone()
     if data:
         return 'Страница уже существует'
     else:
@@ -82,20 +84,22 @@ def insert_check_to_db(conn, id, req):
 
 
 def get_checks(conn, id):
-    query = "SELECT * FROM url_checks WHERE url_id = (%s)"
+    data = []
+    query = "SELECT * FROM url_checks WHERE url_id = (%s) ORDER BY id DESC"
     args = (id,)
     with conn.cursor() as cur:
         cur.execute(query, args)
-        data = cur.fetchall()
-    return [
-        {
-            'id': check[0],
-            'url_id': check[1],
-            'status_code': check[2],
-            'h1': check[3],
-            'title': check[4],
-            'description': check[5],
-            'created_at': check[6],
-        }
-        for check in data[::-1]
-    ]
+        while True:
+            row = cur.fetchone()
+            if not row:
+                break
+            data.append({
+                'id': row[0],
+                'url_id': row[1],
+                'status_code': row[2],
+                'h1': row[3],
+                'title': row[4],
+                'description': row[5],
+                'created_at': row[6],
+            })
+    return data
