@@ -2,25 +2,12 @@ from datetime import datetime
 from page_analyzer.parser import Parser
 
 
-def send_query(conn, cur, query, args=None):
-    try:
-        cur.execute(query, args)
-        if query.startswith('INSERT'):
-            conn.commit()
-            return None
-        else:
-            data = cur.fetchall()
-            return data
-    except Exception:
-        print('Ошибка БД')
-        conn.rollback()
-
-
-def select_url(conn, id):
+def get_url(conn, id):
     with conn.cursor() as cur:
         query = "SELECT name, created_at from urls WHERE id = (%s)"
         args = (id,)
-        data = send_query(conn, cur, query, args)
+        cur.execute(query, args)
+        data = cur.fetchall()
     if not data:
         return None
     (name, created_at) = data[0]
@@ -31,14 +18,15 @@ def select_url(conn, id):
     }
 
 
-def select_urls(conn):
+def get_urls(conn):
     query = "SELECT urls.id, urls.name, urls.created_at, " \
             "MAX(url_checks.created_at), url_checks.status_code " \
             "from url_checks RIGHT JOIN urls on url_checks.url_id = " \
             "urls.id GROUP BY urls.id, url_checks.status_code " \
             "ORDER BY urls.id DESC"
     with conn.cursor() as cur:
-        data = send_query(conn, cur, query)
+        cur.execute(query)
+        data = cur.fetchall()
     return [
         {
             'id': url[0],
@@ -51,20 +39,22 @@ def select_urls(conn):
     ]
 
 
-def select_url_id(conn, url):
+def get_url_id(conn, url):
     query = "SELECT id from urls WHERE name = (%s)"
     args = (url,)
     with conn.cursor() as cur:
-        data = send_query(conn, cur, query, args)
+        cur.execute(query, args)
+        data = cur.fetchall()
     (id,) = data[0]
     return id
 
 
-def insert_to_db(conn, url):
+def insert_url_to_db(conn, url):
     query = "SELECT * from urls WHERE name = (%s)"
     args = (url,)
     with conn.cursor() as cur:
-        data = send_query(conn, cur, query, args)
+        cur.execute(query, args)
+        data = cur.fetchall()
     if data:
         return 'Страница уже существует'
     else:
@@ -73,7 +63,7 @@ def insert_to_db(conn, url):
         query = "INSERT INTO urls (name, created_at) VALUES (%s, %s)"
         args = (url, timestamp)
         with conn.cursor() as cur:
-            send_query(conn, cur, query, args)
+            cur.execute(query, args)
         return 'Страница успешно добавлена'
 
 
@@ -88,14 +78,15 @@ def insert_check_to_db(conn, id, req):
             "description, created_at) VALUES (%s, %s, %s, %s, %s, %s)"
     args = (id, req.status_code, h1, title, description, timestamp)
     with conn.cursor() as cur:
-        send_query(conn, cur, query, args)
+        cur.execute(query, args)
 
 
-def select_checks(conn, id):
+def get_checks(conn, id):
     query = "SELECT * FROM url_checks WHERE url_id = (%s)"
     args = (id,)
     with conn.cursor() as cur:
-        data = send_query(conn, cur, query, args)
+        cur.execute(query, args)
+        data = cur.fetchall()
     return [
         {
             'id': check[0],
