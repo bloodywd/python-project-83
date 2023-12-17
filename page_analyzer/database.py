@@ -10,7 +10,7 @@ def get_url(conn, id):
         data = cur.fetchone()
     if not data:
         return None
-    (name, created_at) = data
+    name, created_at = data
     return {
         'id': id,
         'name': name,
