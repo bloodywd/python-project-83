@@ -8,7 +8,7 @@
 
 ## About the project.
 
-Page analyzer is a small web-interface application for SEO quality assurance tests similar to PageSpeed Insights. <br>
+Page analyzer is a small web-interface application for SEO quality assurance tests similar to PageSpeed Insights. 
 [See the example](https://page-analyzer-26u6.onrender.com/)
 
 ## How to start
@@ -21,5 +21,5 @@ To use the app you'll need to provide it with $DATABASE_URL and $SECRET_KEY vars
 
 ## System requirements
 
-Python 3.10
-PostgreSQL 12.14
+- Python 3.10
+- PostgreSQL 12.14
