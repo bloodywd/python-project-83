@@ -6,4 +6,20 @@
 [![Maintainability](https://api.codeclimate.com/v1/badges/b18375dd1b1733fa986d/maintainability)](https://codeclimate.com/github/bloodywd/python-project-83/maintainability)
 
 
-<https://page-analyzer-26u6.onrender.com/>
+## About the project.
+
+Page analyzer is a small web-interface application for SEO quality assurance tests similar to PageSpeed Insights. <br>
+[See the example](https://page-analyzer-26u6.onrender.com/)
+
+## How to start
+
+```
+make build
+make start
+```
+To use the app you'll need to provide it with $DATABASE_URL and $SECRET_KEY vars.
+
+## System requirements
+
+Python 3.10
+PostgreSQL 12.14
