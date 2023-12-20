@@ -1,5 +1,6 @@
 from datetime import datetime
-from psycopg2.errors import UniqueViolation
+from psycopg2.errorcodes import UNIQUE_VIOLATION
+from psycopg2 import errors
 
 
 class UniqieURL(Exception):
@@ -64,7 +65,7 @@ def insert_url_to_db(conn, url):
     with conn.cursor() as cur:
         try:
             cur.execute(query, args)
-        except UniqueViolation:
+        except errors.lookup(UNIQUE_VIOLATION):
             raise UniqieURL('URL already exists')
 
 

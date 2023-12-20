@@ -74,7 +74,8 @@ def check_post(id):
                 h1 = parser.get_h1()
                 title = parser.get_title()
                 description = parser.get_description()
-                insert_check_to_db(conn, id, req.status_code, h1, title, description)
+                insert_check_to_db(conn, id, req.status_code,
+                                   h1, title, description)
                 flash('Страница успешно проверена', 'success')
             else:
                 flash('Произошла ошибка при проверке', 'danger')
