@@ -54,6 +54,7 @@ def url_post():
             flash('Страница успешно добавлена', 'success')
         except UniqueURL:
             flash('Страница уже существует', 'success')
+            raise
     with get_connection() as conn:
         id = get_url_id(conn, url)
     return redirect(

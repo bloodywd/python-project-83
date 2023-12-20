@@ -2,6 +2,7 @@ from os import getenv
 from contextlib import contextmanager
 from psycopg2.pool import SimpleConnectionPool
 from psycopg2 import Error
+from page_analyzer.database import UniqueURL
 
 
 connection_pool = None
@@ -18,6 +19,9 @@ def get_connection():
         connection = connection_pool.getconn()
         yield connection
         connection.commit()
+    except UniqueURL:
+        connection.rollback()
+        print('URL already exists, rolled back operation')
     except (Exception, Error) as e:
         connection.rollback()
         raise e
