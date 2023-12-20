@@ -8,6 +8,8 @@ from flask import (
     get_flashed_messages,
     abort
 )
+import requests
+from page_analyzer.connection import get_connection
 from page_analyzer.database import (
     get_checks,
     get_url_id,
@@ -16,41 +18,15 @@ from page_analyzer.database import (
     insert_check_to_db,
     insert_url_to_db,
 )
+from page_analyzer.parser import Parser
 from page_analyzer.validate import Validator
+from os import getenv
 from dotenv import load_dotenv
-import requests
-from contextlib import contextmanager
-from psycopg2.pool import SimpleConnectionPool
-import os
 
 
 load_dotenv()
 app = Flask(__name__)
-app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
-connection_pool = None
-
-# @contextmanager возвращает объект с двумя магическими методами:
-# __enter__() и __exit__(). Все, что до yield, относится к enter,
-# остальное к exit. with() ищет метод enter и запускает его
-# после выхода из with запускается exit
-# global нужен для доступа и изменения переменной внутри scope функции
-
-
-@contextmanager
-def get_connection():
-    global connection_pool
-    connection = None
-    DATABASE_URL = os.getenv('DATABASE_URL')
-    connection_pool = SimpleConnectionPool(1, 8, dsn=DATABASE_URL)
-    try:
-        connection = connection_pool.getconn()
-        yield connection
-        connection.commit()
-    except Exception as error:
-        connection.rollback()
-        raise error
-    finally:
-        connection_pool.putconn(connection)
+app.config['SECRET_KEY'] = getenv('SECRET_KEY')
 
 
 @app.route('/')
@@ -92,7 +68,11 @@ def check_post(id):
             flash('Произошла ошибка при проверке', 'danger')
         else:
             if req.status_code == 200:
-                insert_check_to_db(conn, id, req)
+                parser = Parser(req.text)
+                h1 = parser.get_h1()
+                title = parser.get_title()
+                description = parser.get_description()
+                insert_check_to_db(conn, id, req.status_code, h1, title, description)
                 flash('Страница успешно проверена', 'success')
             else:
                 flash('Произошла ошибка при проверке', 'danger')

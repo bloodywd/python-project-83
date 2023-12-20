@@ -1,5 +1,6 @@
 from datetime import datetime
-from page_analyzer.parser import Parser
+from psycopg2.errorcodes import UNIQUE_VIOLATION
+from psycopg2 import errors
 
 
 def get_url(conn, id):
@@ -47,40 +48,32 @@ def get_url_id(conn, url):
     with conn.cursor() as cur:
         cur.execute(query, args)
         data = cur.fetchone()
-    (id,) = data
-    return id
+    if data:
+        (id,) = data
+        return id
 
 
 def insert_url_to_db(conn, url):
-    query = "SELECT * from urls WHERE name = (%s)"
-    args = (url,)
-    with conn.cursor() as cur:
-        cur.execute(query, args)
-        data = cur.fetchone()
-    if data:
-        return 'Страница уже существует'
-    else:
-        current_datetime = datetime.now()
-        timestamp = current_datetime.strftime('%Y-%m-%d')
-        query = "INSERT INTO urls (name, created_at) VALUES (%s, %s)"
-        args = (url, timestamp)
+    current_datetime = datetime.now()
+    timestamp = current_datetime.strftime('%Y-%m-%d')
+    query = "INSERT INTO urls (name, created_at) VALUES (%s, %s)"
+    args = (url, timestamp)
+    try:
         with conn.cursor() as cur:
             cur.execute(query, args)
-        return 'Страница успешно добавлена'
+    except errors.lookup(UNIQUE_VIOLATION):
+        conn.rollback()
+        return 'Страница уже существует'
+    return 'Страница успешно добавлена'
 
 
-def insert_check_to_db(conn, id, req):
-    parser = Parser(req.text)
-    h1 = parser.get_h1()
-    title = parser.get_title()
-    description = parser.get_description()
+def insert_check_to_db(conn, *args):
     current_datetime = datetime.now()
     timestamp = current_datetime.strftime('%Y-%m-%d')
     query = "INSERT INTO url_checks (url_id, status_code, h1, title, " \
             "description, created_at) VALUES (%s, %s, %s, %s, %s, %s)"
-    args = (id, req.status_code, h1, title, description, timestamp)
     with conn.cursor() as cur:
-        cur.execute(query, args)
+        cur.execute(query, (*args, timestamp))
 
 
 def get_checks(conn, id):
