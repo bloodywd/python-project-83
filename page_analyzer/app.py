@@ -50,9 +50,12 @@ def url_post():
     else:
         url = validation.get_url()
         with get_connection() as conn:
-            status = insert_url_to_db(conn, url)
+            try:
+                insert_url_to_db(conn, url)
+                flash('Страница успешно добавлена', 'success')
+            except:
+                flash('Страница уже существует', 'success')
             id = get_url_id(conn, url)
-        flash(status, 'success')
         return redirect(
             url_for('url_get', id=id)
         )
@@ -110,3 +113,6 @@ def urls_get():
 @app.errorhandler(404)
 def page_not_found(error):
     return render_template('404.html'), 404
+
+if __name__ == '__main__':
+    app.run()

@@ -1,6 +1,4 @@
 from datetime import datetime
-from psycopg2.errorcodes import UNIQUE_VIOLATION
-from psycopg2 import errors
 
 
 def get_url(conn, id):
@@ -58,13 +56,8 @@ def insert_url_to_db(conn, url):
     timestamp = current_datetime.strftime('%Y-%m-%d')
     query = "INSERT INTO urls (name, created_at) VALUES (%s, %s)"
     args = (url, timestamp)
-    try:
-        with conn.cursor() as cur:
-            cur.execute(query, args)
-    except errors.lookup(UNIQUE_VIOLATION):
-        conn.rollback()
-        return 'Страница уже существует'
-    return 'Страница успешно добавлена'
+    with conn.cursor() as cur:
+        cur.execute(query, args)
 
 
 def insert_check_to_db(conn, *args):

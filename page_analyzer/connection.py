@@ -1,7 +1,8 @@
 from os import getenv
 from contextlib import contextmanager
 from psycopg2.pool import SimpleConnectionPool
-
+from psycopg2.errorcodes import UNIQUE_VIOLATION
+from psycopg2 import errors
 connection_pool = None
 
 
@@ -15,6 +16,8 @@ def get_connection():
         connection = connection_pool.getconn()
         yield connection
         connection.commit()
+    except errors.lookup(UNIQUE_VIOLATION):
+        connection.rollback()
     except Exception as e:
         connection.rollback()
         raise e
