@@ -64,7 +64,7 @@ def insert_url_to_db(conn, url):
     with conn.cursor() as cur:
         try:
             cur.execute(query, args)
-        except UniqueViolation as e:
+        except UniqueViolation:
             raise UniqieURL('URL already exists')
 
 

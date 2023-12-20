@@ -23,7 +23,6 @@ from page_analyzer.validate import Validator
 from os import getenv
 from dotenv import load_dotenv
 
-
 load_dotenv()
 app = Flask(__name__)
 app.config['SECRET_KEY'] = getenv('SECRET_KEY')
@@ -47,19 +46,18 @@ def url_post():
         return render_template('index.html',
                                messages=messages,
                                value=url), 422
-    else:
-        url = validation.get_url()
-        with get_connection() as conn:
-            try:
-                insert_url_to_db(conn, url)
-                flash('Страница успешно добавлена', 'success')
-            except (UniqieURL):
-                flash('Страница уже существует', 'success')
-        with get_connection() as conn:
-            id = get_url_id(conn, url)
-        return redirect(
-            url_for('url_get', id=id)
-        )
+    url = validation.get_url()
+    with get_connection() as conn:
+        try:
+            insert_url_to_db(conn, url)
+            flash('Страница успешно добавлена', 'success')
+        except (UniqieURL):
+            flash('Страница уже существует', 'success')
+    with get_connection() as conn:
+        id = get_url_id(conn, url)
+    return redirect(
+        url_for('url_get', id=id)
+    )
 
 
 @app.post('/urls/<int:id>/checks')
@@ -114,6 +112,3 @@ def urls_get():
 @app.errorhandler(404)
 def page_not_found(error):
     return render_template('404.html'), 404
-
-if __name__ == '__main__':
-    app.run()
