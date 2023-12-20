@@ -3,7 +3,7 @@ from psycopg2.errorcodes import UNIQUE_VIOLATION
 from psycopg2 import errors
 
 
-class UniqieURL(Exception):
+class UniqueURL(Exception):
     pass
 
 
@@ -66,7 +66,7 @@ def insert_url_to_db(conn, url):
         try:
             cur.execute(query, args)
         except errors.lookup(UNIQUE_VIOLATION):
-            raise UniqieURL('URL already exists')
+            raise UniqueURL('URL already exists')
 
 
 def insert_check_to_db(conn, *args):

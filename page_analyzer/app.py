@@ -16,7 +16,8 @@ from page_analyzer.database import (
     get_urls,
     get_url,
     insert_check_to_db,
-    insert_url_to_db, UniqieURL,
+    insert_url_to_db,
+    UniqueURL,
 )
 from page_analyzer.parser import Parser
 from page_analyzer.validate import Validator
@@ -51,7 +52,7 @@ def url_post():
         try:
             insert_url_to_db(conn, url)
             flash('Страница успешно добавлена', 'success')
-        except (UniqieURL):
+        except UniqueURL:
             flash('Страница уже существует', 'success')
     with get_connection() as conn:
         id = get_url_id(conn, url)
