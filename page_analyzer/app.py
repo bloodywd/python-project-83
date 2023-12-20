@@ -17,12 +17,13 @@ from page_analyzer.database import (
     get_url,
     insert_check_to_db,
     insert_url_to_db,
-    UniqueURL,
+    UniqueURL
 )
 from page_analyzer.parser import Parser
 from page_analyzer.validate import Validator
 from os import getenv
 from dotenv import load_dotenv
+
 
 load_dotenv()
 app = Flask(__name__)
