@@ -2,7 +2,6 @@ from os import getenv
 from contextlib import contextmanager
 from psycopg2.pool import SimpleConnectionPool
 from psycopg2 import Error
-from page_analyzer.database import UniqueURL
 
 
 connection_pool = None
@@ -21,7 +20,6 @@ def get_connection():
         connection.commit()
     except (Exception, Error) as e:
         connection.rollback()
-        print('rollback')
         raise e
     finally:
         connection_pool.putconn(connection)
