@@ -17,7 +17,8 @@ from page_analyzer.database import (
     get_url_by_id,
     insert_check_to_db,
     insert_url_to_db,
-    UniqueURL
+    UniqueURL,
+    get_last_checks
 )
 from page_analyzer.parser import Parser
 from page_analyzer.validate import Validator
@@ -52,12 +53,13 @@ def url_post():
     url = validation.get_url()
     try:
         with get_connection() as connection:
-            id = insert_url_to_db(connection, url)[0]
+            id = insert_url_to_db(connection, url)['id']
             flash('Страница успешно добавлена', 'success')
     except UniqueURL:
-        with get_connection() as connection:
-            id = get_url_by_name(connection, url)[0]
         flash('Страница уже существует', 'success')
+    if not id:
+        with get_connection() as connection:
+            id = get_url_by_name(connection, url)['id']
     return redirect(
         url_for('url_get', id=id)
     )
@@ -107,9 +109,11 @@ def url_get(id):
 def urls_get():
     with get_connection() as connection:
         urls = get_urls(connection)
+        last_checks = get_last_checks(connection)
     return render_template(
         'urls.html',
-        urls=urls
+        urls=urls,
+        checks=last_checks
     )
 
 

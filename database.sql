@@ -14,3 +14,5 @@ CREATE TABLE url_checks
     title varchar(255),
     description text,
     created_at date);
+
+CREATE INDEX created_at_ind ON url_checks(created_at);
