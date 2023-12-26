@@ -50,20 +50,18 @@ def get_url_id(cursor, url):
     cursor.execute(query, args)
     data = cursor.fetchone()
     if data:
-        (id,) = data
-        return id
+        return data
 
 
 def insert_url_to_db(cursor, url):
     current_datetime = datetime.now()
     timestamp = current_datetime.strftime('%Y-%m-%d')
-    query = "INSERT INTO urls (name, created_at) VALUES (%s, %s) RETURNING id"
+    query = "INSERT INTO urls (name, created_at) VALUES (%s, %s) RETURNING *"
     args = (url, timestamp)
     try:
         cursor.execute(query, args)
         data = cursor.fetchone()
-        (id,) = data
-        return id
+        return data
     except errors.lookup(UNIQUE_VIOLATION):
         raise UniqueURL('URL already exists')
 

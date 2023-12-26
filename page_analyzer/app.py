@@ -52,10 +52,11 @@ def url_post():
     url = validation.get_url()
     try:
         with get_connection() as connection:
-            id = get_url_id(connection, url)
-            id = insert_url_to_db(connection, url)
+            id = insert_url_to_db(connection, url)[0]
             flash('Страница успешно добавлена', 'success')
     except UniqueURL:
+        with get_connection() as connection:
+            id = get_url_id(connection, url)[0]
         flash('Страница уже существует', 'success')
     return redirect(
         url_for('url_get', id=id)
