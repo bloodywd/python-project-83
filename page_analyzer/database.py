@@ -7,7 +7,7 @@ class UniqueURL(Exception):
     pass
 
 
-def get_url(cursor, id):
+def get_url_by_id(cursor, id):
     query = "SELECT name, created_at from urls WHERE id = (%s)"
     args = (id,)
     cursor.execute(query, args)
@@ -44,7 +44,7 @@ def get_urls(connection):
     return data
 
 
-def get_url_id(cursor, url):
+def get_url_by_name(cursor, url):
     query = "SELECT id from urls WHERE name = (%s)"
     args = (url,)
     cursor.execute(query, args)

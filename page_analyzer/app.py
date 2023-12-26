@@ -12,9 +12,9 @@ import requests
 from page_analyzer.connection import get_connection
 from page_analyzer.database import (
     get_checks,
-    get_url_id,
+    get_url_by_name,
     get_urls,
-    get_url,
+    get_url_by_id,
     insert_check_to_db,
     insert_url_to_db,
     UniqueURL
@@ -56,7 +56,7 @@ def url_post():
             flash('Страница успешно добавлена', 'success')
     except UniqueURL:
         with get_connection() as connection:
-            id = get_url_id(connection, url)[0]
+            id = get_url_by_name(connection, url)[0]
         flash('Страница уже существует', 'success')
     return redirect(
         url_for('url_get', id=id)
@@ -66,7 +66,7 @@ def url_post():
 @app.post('/urls/<int:id>/checks')
 def check_post(id):
     with get_connection() as connection:
-        url = get_url(connection, id)
+        url = get_url_by_id(connection, id)
         try:
             req = requests.get(url['name'], timeout=1)
         except Exception:
@@ -91,7 +91,7 @@ def check_post(id):
 def url_get(id):
     messages = get_flashed_messages(with_categories=True)
     with get_connection() as connection:
-        url = get_url(connection, id)
+        url = get_url_by_id(connection, id)
         if not url:
             abort(404)
         checks = get_checks(connection, id)
