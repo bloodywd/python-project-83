@@ -66,7 +66,6 @@ def insert_url_to_db(cursor, url):
         return id
     except errors.lookup(UNIQUE_VIOLATION):
         raise UniqueURL('URL already exists')
-        return 0
 
 
 def insert_check_to_db(cursor, *args):
