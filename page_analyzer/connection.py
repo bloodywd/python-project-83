@@ -16,10 +16,12 @@ def get_connection():
         connection_pool = SimpleConnectionPool(1, 8, dsn=DATABASE_URL)
     try:
         connection = connection_pool.getconn()
-        yield connection
+        cursor = connection.cursor()
+        yield cursor
         connection.commit()
     except (Exception, Error) as e:
         connection.rollback()
         raise e
     finally:
+        cursor.close()
         connection_pool.putconn(connection)

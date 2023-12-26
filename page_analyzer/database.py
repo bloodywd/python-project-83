@@ -22,16 +22,16 @@ def get_url(cursor, id):
     }
 
 
-def get_urls(cursor):
+def get_urls(connection):
     data = []
     query = "SELECT urls.id, urls.name, urls.created_at, " \
             "MAX(url_checks.created_at), url_checks.status_code " \
             "from url_checks RIGHT JOIN urls on url_checks.url_id = " \
             "urls.id GROUP BY urls.id, url_checks.status_code " \
             "ORDER BY urls.id DESC"
-    cursor.execute(query)
+    connection.execute(query)
     while True:
-        row = cursor.fetchone()
+        row = connection.fetchone()
         if not row:
             break
         data.append({
@@ -57,12 +57,16 @@ def get_url_id(cursor, url):
 def insert_url_to_db(cursor, url):
     current_datetime = datetime.now()
     timestamp = current_datetime.strftime('%Y-%m-%d')
-    query = "INSERT INTO urls (name, created_at) VALUES (%s, %s)"
+    query = "INSERT INTO urls (name, created_at) VALUES (%s, %s) RETURNING id"
     args = (url, timestamp)
     try:
         cursor.execute(query, args)
+        data = cursor.fetchone()
+        (id,) = data
+        return id
     except errors.lookup(UNIQUE_VIOLATION):
         raise UniqueURL('URL already exists')
+        return 0
 
 
 def insert_check_to_db(cursor, *args):

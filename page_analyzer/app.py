@@ -40,6 +40,7 @@ def main_get():
 @app.post('/urls')
 def url_post():
     url = request.form.get('url')
+    id = None
     validation = Validator(url)
     if not (validation.has_symbols().normalize().
             is_not_too_long().is_correct().is_valid()):
@@ -51,14 +52,11 @@ def url_post():
     url = validation.get_url()
     try:
         with get_connection() as connection:
-            with connection.cursor() as cursor:
-                insert_url_to_db(cursor, url)
-                flash('Страница успешно добавлена', 'success')
+            id = get_url_id(connection, url)
+            id = insert_url_to_db(connection, url)
+            flash('Страница успешно добавлена', 'success')
     except UniqueURL:
         flash('Страница уже существует', 'success')
-    with get_connection() as connection:
-        with connection.cursor() as cursor:
-            id = get_url_id(cursor, url)
     return redirect(
         url_for('url_get', id=id)
     )
@@ -67,23 +65,22 @@ def url_post():
 @app.post('/urls/<int:id>/checks')
 def check_post(id):
     with get_connection() as connection:
-        with connection.cursor() as cursor:
-            url = get_url(cursor, id)
-            try:
-                req = requests.get(url['name'], timeout=1)
-            except Exception:
-                flash('Произошла ошибка при проверке', 'danger')
+        url = get_url(connection, id)
+        try:
+            req = requests.get(url['name'], timeout=1)
+        except Exception:
+            flash('Произошла ошибка при проверке', 'danger')
+        else:
+            if req.status_code == 200:
+                parser = Parser(req.text)
+                h1 = parser.get_h1()
+                title = parser.get_title()
+                description = parser.get_description()
+                insert_check_to_db(connection, id, req.status_code,
+                                   h1, title, description)
+                flash('Страница успешно проверена', 'success')
             else:
-                if req.status_code == 200:
-                    parser = Parser(req.text)
-                    h1 = parser.get_h1()
-                    title = parser.get_title()
-                    description = parser.get_description()
-                    insert_check_to_db(cursor, id, req.status_code,
-                                       h1, title, description)
-                    flash('Страница успешно проверена', 'success')
-                else:
-                    flash('Произошла ошибка при проверке', 'danger')
+                flash('Произошла ошибка при проверке', 'danger')
     return redirect(
         url_for('url_get', id=id)
     )
@@ -93,11 +90,10 @@ def check_post(id):
 def url_get(id):
     messages = get_flashed_messages(with_categories=True)
     with get_connection() as connection:
-        with connection.cursor() as cursor:
-            url = get_url(cursor, id)
-            if not url:
-                abort(404)
-            checks = get_checks(cursor, id)
+        url = get_url(connection, id)
+        if not url:
+            abort(404)
+        checks = get_checks(connection, id)
     return render_template(
         'url.html',
         messages=messages,
@@ -109,8 +105,7 @@ def url_get(id):
 @app.route('/urls')
 def urls_get():
     with get_connection() as connection:
-        with connection.cursor() as cursor:
-            urls = get_urls(cursor)
+        urls = get_urls(connection)
     return render_template(
         'urls.html',
         urls=urls
