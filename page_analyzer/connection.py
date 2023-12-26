@@ -19,11 +19,9 @@ def get_connection():
         connection = connection_pool.getconn()
         yield connection
         connection.commit()
-    except UniqueURL:
-        connection.rollback()
-        print('URL already exists, rolled back operation')
     except (Exception, Error) as e:
         connection.rollback()
+        print('rollback')
         raise e
     finally:
         connection_pool.putconn(connection)
