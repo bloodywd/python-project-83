@@ -110,10 +110,20 @@ def urls_get():
     with get_connection() as connection:
         urls = get_urls(connection)
         last_checks = get_last_checks(connection)
+
+    data = [
+        {
+            "status_code": check["status_code"],
+            "last_time_checked": check["created_at"],
+            **url
+        }
+        for url in urls
+        for check in last_checks
+        if check["url_id"] == url["id"]
+    ]
     return render_template(
         'urls.html',
-        urls=urls,
-        checks=last_checks
+        urls=data,
     )
 
 
