@@ -16,7 +16,7 @@ def get_url_by_id(cursor, id):
 
 
 def get_urls(cursor):
-    query = "SELECT * from urls"
+    query = "SELECT * from urls ORDER BY id DESC"
     cursor.execute(query)
     data = cursor.fetchall()
     return data

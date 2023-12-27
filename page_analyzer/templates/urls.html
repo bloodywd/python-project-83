@@ -14,12 +14,12 @@
                 </tr>
             </thead>
             <tbody>
-                {% for url in urls %}
+                {% for row in data %}
                 <tr>
-                    <td>{{ url.id }}</td>
-                    <td><a href="{{ url_for('url_get', id=url.id) }}">{{url.name}}</a></td>
-                    <td>{{ url.last_time_checked }}</td>
-                    <td>{{ url.status_code }}</td>
+                    <td>{{ row.url.id }}</td>
+                    <td><a href="{{ url_for('url_get', id=row.url.id) }}">{{row.url.name}}</a></td>
+                    <td>{{ row.check.created_at if row.check else '' }}</td>
+                    <td>{{ row.check.status_code if row.check else '' }}</td>
                 </tr>
                 {% endfor %}
             </tbody>

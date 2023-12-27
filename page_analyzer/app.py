@@ -113,17 +113,18 @@ def urls_get():
 
     data = [
         {
-            "status_code": check["status_code"],
-            "last_time_checked": check["created_at"],
-            **url
+            "url": url,
+            "check": next(
+                (check for check in last_checks
+                 if check["url_id"] == url["id"]), None
+            )
         }
         for url in urls
-        for check in last_checks
-        if check["url_id"] == url["id"]
     ]
+    print(data)
     return render_template(
         'urls.html',
-        urls=data,
+        data=data,
     )
 
 
