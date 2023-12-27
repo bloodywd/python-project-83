@@ -121,7 +121,6 @@ def urls_get():
         }
         for url in urls
     ]
-    print(data)
     return render_template(
         'urls.html',
         data=data,
